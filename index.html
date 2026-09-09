@@ -3,23 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мой сайт</title>
+    <title>Мой Мессенджер с Регистрацией</title>
     <style>
+        * { box-sizing: border-box; }
+        
         body {
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: #f4f7f6;
             margin: 0;
-            padding: 40px;
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
         }
-        .floating-btn {
+
+        /* БЛОК 1: ГЛАВНАЯ СТРАНИЦА */
+        .welcome-screen {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .floating-reg-btn {
             position: fixed;
             bottom: 30px;
             right: 30px;
-            background: #4f46e5;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
             color: white;
             border: none;
             padding: 15px 25px;
@@ -27,58 +36,193 @@
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-            z-index: 1000;
+            box-shadow: 0 5px 20px rgba(79, 70, 229, 0.4);
+            z-index: 999;
+            transition: all 0.3s ease;
+            animation: floatAnim 3s ease-in-out infinite;
         }
+        .floating-reg-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 25px rgba(79, 70, 229, 0.6);
+        }
+        @keyframes floatAnim {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+            100% { transform: translateY(0px); }
+        }
+
+        /* ОКНО РЕГИСТРАЦИИ (МОДАЛЬНОЕ) */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.5);
+            background: rgba(0, 0, 0, 0.5);
             display: none;
             justify-content: center;
             align-items: center;
-            z-index: 2000;
+            z-index: 1000;
         }
         .modal-content {
             background: white;
             padding: 30px;
             border-radius: 15px;
-            width: 300px;
+            width: 100%;
+            max-width: 340px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
             position: relative;
         }
         .close-btn {
             position: absolute;
-            top: 10px; right: 10px;
-            cursor: pointer;
-            font-size: 20px;
-            background: none; border: none;
+            top: 15px; right: 15px;
+            font-size: 22px; color: #aaa; cursor: pointer;
+            border: none; background: none;
         }
-        .input-group { margin-bottom: 15px; }
-        .input-group input { width: 100%; padding: 8px; box-sizing: border-box; }
-        .submit-btn { width: 100%; padding: 10px; background: #4f46e5; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        .input-group { margin-bottom: 15px; text-align: left; }
+        .input-group label { display: block; margin-bottom: 5px; font-size: 14px; color: #4a5568; }
+        .input-group input { width: 100%; padding: 10px; border: 1px solid #cbd5e0; border-radius: 8px; }
+        .submit-btn { width: 100%; padding: 12px; background: #4f46e5; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+
+        /* БЛОК 2: МЕССЕНДЖЕР (Изначально скрыт) */
+        .chat-container {
+            display: none; /* Скрываем до авторизации */
+            width: 100%;
+            max-width: 600px;
+            background: #fff;
+            flex-direction: column;
+            height: 100vh;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .chat-header { background: #075e54; color: white; padding: 15px; font-size: 18px; font-weight: bold; }
+        .messages-zone {
+            flex: 1; padding: 20px; overflow-y: auto;
+            background: url('https://githubusercontent.com');
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .message { max-width: 75%; padding: 8px 12px; border-radius: 8px; font-size: 15px; word-break: break-word; }
+        .message.incoming { background: #fff; align-self: flex-start; }
+        .message.outgoing { background: #dcf8c6; align-self: flex-end; }
+        .message .username { font-size: 12px; font-weight: bold; color: #128c7e; margin-bottom: 3px; }
+        .chat-input-area { background: #f0f0f0; padding: 10px; display: flex; gap: 10px; }
+        .chat-input-area input { flex: 1; padding: 12px; border: 1px solid #ccc; border-radius: 20px; outline: none; }
+        .chat-input-area button { background: #075e54; color: white; border: none; padding: 0 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
     </style>
+    <!-- Подключаем бесплатную онлайн-базу данных для мгновенных сообщений -->
+    <script src="https://jsdelivr.net"></script>
 </head>
 <body>
 
-    <h1>Добро пожаловать на мой сайт! 👋</h1>
+    <!-- 1. ЭКРАН ПРИВЕТСТВИЯ С ЛЕТАЮЩЕЙ КНОПКОЙ -->
+    <div class="welcome-screen" id="welcomeScreen">
+        <h1>Добро пожаловать в Секретный Чат! 🚀</h1>
+        <p>Чтобы начать общаться с друзьями, вам необходимо пройти простую регистрацию.</p>
+        <button class="floating-reg-btn" onclick="openModal()">📝 Зарегистрироваться</button>
+    </div>
 
-    <!-- Летающая кнопка -->
-    <button class="floating-btn" onclick="document.getElementById('myModal').style.display='flex'">📝 Зарегистрируйтесь</button>
-
-    <!-- Окно регистрации -->
-    <div class="modal-overlay" id="myModal" onclick="if(event.target===this) this.style.display='none'">
+    <!-- МОДАЛЬНОЕ ОКНО РЕГИСТРАЦИИ -->
+    <div class="modal-overlay" id="modalOverlay" onclick="if(event.target===this) closeModal()">
         <div class="modal-content">
-            <button class="close-btn" onclick="document.getElementById('myModal').style.display='none'">&times;</button>
-            <h3>Регистрация</h3>
-            <form onsubmit="event.preventDefault(); alert('Готово! Демо-регистрация успешна.'); document.getElementById('myModal').style.display='none'">
-                <div class="input-group"><input type="text" placeholder="Ваше Имя" required></div>
-                <div class="input-group"><input type="email" placeholder="Ваш Email" required></div>
-                <button type="submit" class="submit-btn">Отправить</button>
+            <button class="close-btn" onclick="closeModal()">&times;</button>
+            <h2>Регистрация</h2>
+            <form onsubmit="handleRegister(event)">
+                <div class="input-group">
+                    <label>Придумайте никнейм</label>
+                    <input type="text" placeholder="Ваше имя в чате" required id="regName">
+                </div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <input type="email" placeholder="example@mail.com" required>
+                </div>
+                <button type="submit" class="submit-btn">Войти в мессенджер</button>
             </form>
         </div>
     </div>
 
+    <!-- 2. ЭКРАН МЕССЕНДЖЕРА -->
+    <div class="chat-container" id="chatContainer">
+        <div class="chat-header">🌐 Наш общий Мессенджер (Вы вошли как: <span id="currentNickname"></span>)</div>
+        <div class="messages-zone" id="msgZone"></div>
+        <form class="chat-input-area" onsubmit="sendMessage(event)">
+            <input type="text" id="messageInput" placeholder="Напишите сообщение..." required>
+            <button type="submit">Отправить</button>
+        </form>
+    </div>
+
+    <script>
+        // Переменная для хранения имени пользователя
+        let currentUser = "";
+
+        // Настройка базы данных чата
+        const gun = Gun(['https://herokuapp.com']);
+        const chatRoom = gun.get('my-shared-github-messenger-room-2026');
+
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const chatContainer = document.getElementById('chatContainer');
+        const modal = document.getElementById('modalOverlay');
+        const msgZone = document.getElementById('msgZone');
+        const messageInput = document.getElementById('messageInput');
+
+        // Функции модального окна
+        function openModal() { modal.style.display = 'flex'; }
+        function closeModal() { modal.style.display = 'none'; }
+
+        // ОБРАБОТКА РЕГИСТРАЦИИ
+        function handleRegister(event) {
+            event.preventDefault();
+            
+            // Запоминаем имя пользователя
+            currentUser = document.getElementById('regName').value.trim();
+            document.getElementById('currentNickname').textContent = currentUser;
+
+            // Прячем главный экран и модальное окно, показываем мессенджер
+            closeModal();
+            welcomeScreen.style.display = 'none';
+            document.body.style.background = '#e5ddd5'; // Меняем фон на цвет чата
+            chatContainer.style.display = 'flex';
+            
+            // Прокручиваем чат вниз при входе
+            msgZone.scrollTop = msgZone.scrollHeight;
+        }
+
+        // ОТПРАВКА СООБЩЕНИЯ
+        function sendMessage(event) {
+            event.preventDefault();
+            const text = messageInput.value.trim();
+            if(!text || !currentUser) return;
+
+            // Отправляем объект сообщения в базу данных
+            chatRoom.set({
+                user: currentUser,
+                text: text,
+                time: Date.now()
+            });
+
+            messageInput.value = '';
+        }
+
+        // ПОЛУЧЕНИЕ СООБЩЕНИЙ В РЕАЛЬНОМ ВРЕМЕНИ
+        chatRoom.map().on((data, id) => {
+            if (!data || !data.text || !data.user) return;
+            if (document.getElementById(id)) return; // Защита от дубликатов
+
+            const msgDiv = document.createElement('div');
+            msgDiv.id = id;
+            
+            // Если автор сообщения текущий юзер — красим в зеленый и прижимаем вправо
+            if (data.user === currentUser) {
+                msgDiv.className = 'message outgoing';
+            } else {
+                msgDiv.className = 'message incoming';
+            }
+
+            msgDiv.innerHTML = `<div class="username">${escapeHTML(data.user)}</div><div>${escapeHTML(data.text)}</div>`;
+            msgZone.appendChild(msgDiv);
+            msgZone.scrollTop = msgZone.scrollHeight; // Скролл вниз
+        });
+
+        // Безопасность отображения текста
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag));
+        }
+    </script>
 </body>
 </html>
-
 
